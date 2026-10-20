@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceVision AI - Yapay Zeka Yüz Tanıma & Model Eğitimi Platformu</title>
+  <meta name="description" content="Yapay zeka ile yüz tanıma, veri artırımı (rotasyon, ölçekleme) ve derin öğrenme model eğitimi web platformu.">
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon">
+          <i class="fa-solid => fa-brain"></i>
+        </div>
+        <div>
+          <h1 class="brand-title">FaceVision AI</h1>
+          <div class="brand-subtitle">Derin Öğrenme Yüz Tanıma & Veri Artırımı Eğitimi Laboratuvarı</div>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <div class="status-badge" id="aiEngineStatus">
+          <span class="status-dot"></span>
+          <span id="engineStatusText">Yapay Zeka Motoru Hazır (128D Vektör)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <img src="assets/hero_banner.png" alt="Face AI Biometrics Banner">
+      <div class="hero-overlay">
+        <h1>Birlikte Model Eğitimi & Yüz Tanıma Projesi</h1>
+        <p>Görseli döndürme, büyütme, küçültme veya farklı ışık koşullarında tanıyan 128-Boyutlu Vektör Tabanlı Yüz Tanıma Sisteminiz.</p>
+      </div>
+    </div>
+
+    <!-- Quick Demo Bar -->
+    <div class="demo-preset-bar">
+      <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary-cyan); font-size: 1.2rem;"></i>
+      <div class="demo-preset-text">
+        <strong>Hızlı Demo Yükle:</strong> 4 Arkadaş grubu için hazır yüz datasetini ve örnek testi tek tıkla yükleyin.
+      </div>
+      <button class="btn btn-secondary btn-sm" id="btnLoadDemoDataset">
+        <i class="fa-solid fa-cloud-arrow-down"></i> Örnek Dataset & Model Yükle
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-train">
+        <i class="fa-solid fa-user-plus"></i> 1. Model Eğitimi (Kişi Tanıt)
+      </button>
+      <button class="tab-btn" data-tab="tab-recognize">
+        <i class="fa-solid fa-eye"></i> 2. Fotoğrafta Yüz Tanıma
+      </button>
+      <button class="tab-btn" data-tab="tab-transform">
+        <i class="fa-solid fa-arrows-rotate"></i> 3. Dönüştürme & Dayanıklılık Testi
+      </button>
+      <button class="tab-btn" data-tab="tab-webcam">
+        <i class="fa-solid fa-video"></i> 4. Canlı Kamera
+      </button>
+      <button class="tab-btn" data-tab="tab-dataset">
+        <i class="fa-solid fa-database"></i> 5. Veri Tabanı (JSON)
+      </button>
+      <button class="tab-btn" data-tab="tab-lecture">
+        <i class="fa-solid fa-graduation-cap"></i> 6. Hocaya Sunum Rehberi
+      </button>
+    </nav>
+
+    <!-- ================= TAB 1: MODEL EĞİTİMİ & KİŞİ KAYDI ================= -->
+    <section id="tab-train" class="tab-content active">
+      <div class="grid-3">
+        <!-- Left: Upload & Detection Canvas -->
+        <div class="panel-card scan-active">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-image"></i> Eğitilecek Görsel / Fotoğraf</h2>
+            <span class="status-badge" style="font-size: 0.75rem;">Yüz Tespiti Aktif</span>
+          </div>
+
+          <div class="upload-dropzone" id="trainDropzone">
+            <div class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="dropzone-text">Fotoğraf Yüklemek İçin Tıklayın veya Sürükleyin</div>
+            <div class="dropzone-subtext">Arkadaşlarınızın net tekli veya grup fotoğraflarını seçin (JPG, PNG, WEBP)</div>
+            <input type="file" id="trainFileInput" class="file-input" accept="image/*">
+          </div>
+
+          <div style="margin-top: 1.25rem;">
+            <div class="canvas-wrapper" id="trainCanvasContainer">
+              <div class="scan-line"></div>
+              <canvas id="trainCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Face Labeling & Registered People -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-address-card"></i> Kişi Etiketleme & Modeli Eğit</h2>
+          </div>
+
+          <form id="trainForm" onsubmit="return false;">
+            <div class="form-group">
+              <label class="form-label">Tespit Edilen Yüz Seçimi</label>
+              <select id="selectDetectedFace" class="form-control">
+                <option value="">-- Önce Fotoğraf Yükleyin --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Kişinin Adı ve Soyadı</label>
+              <input type="text" id="inputPersonName" class="form-control" placeholder="Örn: Zeynep, Ayşe, Elif, Merve...">
+            </div>
+
+            <button type="button" id="btnTrainPerson" class="btn btn-primary" style="width: 100%; margin-bottom: 1.5rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Kişiyi Modele Kaydet & Eğit
+            </button>
+          </form>
+
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <div class="panel-title" style="font-size: 1rem; margin-bottom: 1rem;">
+              <i class="fa-solid fa-users"></i> Eğitilmiş Kişiler Listesi (<span id="registeredCount">0</span>)
+            </div>
+            <div class="person-grid" id="personGrid">
+              <!-- Dynamically populated person cards -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: FOTOĞRAFTA YÜZ TANIMA ================= -->
+    <section id="tab-recognize" class="tab-content">
+      <div class="grid-3">
+        <!-- Left: Upload Test Photo -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-magnifying-glass"></i> Tanınacak Fotoğraf</h2>
+            <button class="btn btn-outline btn-sm" id="btnReScanRecognize">
+              <i class="fa-solid fa-rotate-right"></i> Yeniden Tara
+            </button>
+          </div>
+
+          <div class="upload-dropzone" id="recognizeDropzone">
+            <div class="dropzone-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+            <div class="dropzone-text">Farklı Bir Fotoğraf Yükleyin</div>
+            <div class="dropzone-subtext">Sistem fotoğraftaki tüm kişileri eğitilmiş dataset ile karşılaştıracaktır</div>
+            <input type="file" id="recognizeFileInput" class="file-input" accept="image/*">
+          </div>
+
+          <div style="margin-top: 1.25rem;">
+            <div class="canvas-wrapper">
+              <canvas id="recognizeCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Recognition Results -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-square-poll-vertical"></i> Tanıma Sonuçları & Analiz</h2>
+          </div>
+
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            Her yüz için 128-boyutlu öznitelik vektörü çıkarılmış ve eğitilen kişilerle Kosinüs Benzerliği hesaplanmıştır.
+          </p>
+
+          <div class="table-wrapper">
+            <table class="custom-table" id="tableRecognitionResults">
+              <thead>
+                <tr>
+                  <th>Yüz #</th>
+                  <th>Tespit Edilen Kişi</th>
+                  <th>Uyum (Benzerlik)</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" style="text-align: center; color: var(--text-muted);">Henüz bir test fotoğrafı taranmadı.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: DÖNÜŞTÜRME & DAYANIKLILIK TESTİ ================= -->
+    <section id="tab-transform" class="tab-content">
+      <div class="grid-3">
+        <!-- Left: Transformed Canvas View -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-sliders"></i> Dönüştürülmüş Görüntü Test Paneli</h2>
+            <span class="status-badge" style="background: rgba(138,43,226,0.15); color: var(--primary-violet); border-color: rgba(138,43,226,0.3);">
+              Büyütme / Döndürme Invariance
+            </span>
+          </div>
+
+          <div class="upload-dropzone" id="transformDropzone" style="padding: 1.5rem; margin-bottom: 1rem;">
+            <div class="dropzone-text"><i class="fa-solid fa-upload"></i> Test Görseli Yükle</div>
+            <input type="file" id="transformFileInput" class="file-input" accept="image/*">
+          </div>
+
+          <div class="canvas-wrapper">
+            <canvas id="transformCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Right: Controls for Rotate, Scale, Flip, Contrast -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-gears"></i> Geometrik & Işık Dönüşümleri</h2>
+            <button class="btn btn-outline btn-sm" id="btnResetTransform">
+              <i class="fa-solid fa-arrows-rotate"></i> Sıfırla
+            </button>
+          </div>
+
+          <!-- Rotation -->
+          <div class="slider-group">
+            <div class="slider-header">
+              <span><i class="fa-solid fa-rotate"></i> Döndürme (Rotation)</span>
+              <span class="slider-value" id="valRotate">0°</span>
+            </div>
+            <input type="range" id="sliderRotate" class="custom-range" min="0" max="360" value="0">
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+              <button class="btn btn-outline btn-sm" onclick="setRotation(90)">90°</button>
+              <button class="btn btn-outline btn-sm" onclick="setRotation(180)">180°</button>
+              <button class="btn btn-outline btn-sm" onclick="setRotation(270)">270°</button>
+            </div>
+          </div>
+
+          <!-- Scale / Zoom -->
+          <div class="slider-group">
+            <div class="slider-header">
+              <span><i class="fa-solid fa-magnifying-glass-plus"></i> Ölçek (Küçültme / Büyütme)</span>
+              <span class="slider-value" id="valScale">100%</span>
+            </div>
+            <input type="range" id="sliderScale" class="custom-range" min="30" max="250" value="100">
+          </div>
+
+          <!-- Brightness -->
+          <div class="slider-group">
+            <div class="slider-header">
+              <span><i class="fa-solid fa-sun"></i> Parlaklık (Brightness)</span>
+              <span class="slider-value" id="valBrightness">100%</span>
+            </div>
+            <input type="range" id="sliderBrightness" class="custom-range" min="40" max="180" value="100">
+          </div>
+
+          <!-- Contrast -->
+          <div class="slider-group">
+            <div class="slider-header">
+              <span><i class="fa-solid fa-circle-half-stroke"></i> Karşıtlık (Contrast)</span>
+              <span class="slider-value" id="valContrast">100%</span>
+            </div>
+            <input type="range" id="sliderContrast" class="custom-range" min="50" max="200" value="100">
+          </div>
+
+          <!-- Flip Switches -->
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+            <button class="btn btn-outline" id="btnFlipH" style="flex: 1;">
+              <i class="fa-solid fa-right-left"></i> Yatay Çevir
+            </button>
+            <button class="btn btn-outline" id="btnFlipV" style="flex: 1;">
+              <i class="fa-solid fa-up-down"></i> Dikey Çevir
+            </button>
+          </div>
+
+          <div style="background: rgba(0, 240, 255, 0.05); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(0, 240, 255, 0.2);">
+            <div style="font-weight: 700; color: var(--primary-cyan); margin-bottom: 0.3rem;">
+              <i class="fa-solid fa-lightbulb"></i> Nasıl Çalışır?
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Görüntü 180° ters dönse veya %40 küçülse dahi, Hizalama (Alignment) ve Derin Vektör Gömme katmanı yüz hatlarını matematiksel oran olarak kodladığı için AI kişiyi doğru tanımaya devam eder!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: CANLI KAMERA ================= -->
+    <section id="tab-webcam" class="tab-content">
+      <div class="grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-camera"></i> Canlı Kamera Taraması</h2>
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" id="btnToggleWebcam">
+                <i class="fa-solid fa-power-off"></i> Kamerayı Başlat / Durdur
+              </button>
+              <button class="btn btn-outline btn-sm" id="btnDemoWebcam">
+                <i class="fa-solid fa-clapperboard"></i> Demo Yayın Başlat
+              </button>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper" style="position: relative; min-height: 380px; background: #05070a; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: var(--radius-md);">
+            <video id="webcamVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: contain; display: none;"></video>
+            <canvas id="webcamCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+            <div id="webcamPlaceholder" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+              <i class="fa-solid fa-camera" style="font-size: 3rem; color: var(--primary-cyan); margin-bottom: 1rem;"></i>
+              <div style="font-weight: 700; font-size: 1.1rem; color: #fff; margin-bottom: 0.4rem;">Kamera Kapalı</div>
+              <div style="font-size: 0.85rem; max-width: 340px; margin: 0 auto; color: var(--text-muted);">
+                "Kamerayı Başlat" butonuna tıklayarak izin verin. Kameranız yoksa "Demo Yayın Başlat" ile sunum simülasyonu yapabilirsiniz.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title"><i class="fa-solid fa-bolt"></i> Gerçek Zamanlı Tanıma Günlüğü</h2>
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              Kamera karşısına geçtiğinizde yüzünüz anlık taranır, hizalanır ve eğitilen profil listenizle eşleştirilir.
+            </p>
+          </div>
+
+          <div id="liveFeedLog" style="height: 320px; overflow-y: auto; background: var(--bg-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); font-family: var(--font-code); font-size: 0.85rem;">
+            <div style="color: var(--text-dim); text-align: center; margin-top: 100px;">Kamera başlatılmayı bekliyor...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: EĞİTİLMİŞ VERİ TABANI & JSON ================= -->
+    <section id="tab-dataset" class="tab-content">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-database"></i> Eğitilmiş Model Veri Seti Yöneticisi</h2>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" id="btnExportJSON">
+              <i class="fa-solid fa-download"></i> Dataset İndir (.JSON)
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('importJSONInput').click();">
+              <i class="fa-solid fa-upload"></i> Dataset Yükle (.JSON)
+            </button>
+            <input type="file" id="importJSONInput" class="file-input" accept=".json">
+            <button class="btn btn-danger btn-sm" id="btnClearDataset">
+              <i class="fa-solid fa-trash"></i> Verileri Temizle
+            </button>
+          </div>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+          Bu panelde eğitmiş olduğunuz tüm kişilerin 128-boyutlu matematiksel yüz öznitelik matrisini inceleyebilir, dosya olarak bilgisayarınıza kaydedip hocanıza sunum sırasında teslim edebilirsiniz.
+        </p>
+
+        <div class="table-wrapper">
+          <table class="custom-table" id="tableDatasetSummary">
+            <thead>
+              <tr>
+                <th>Kişi Adı</th>
+                <th>Örnek Sayısı</th>
+                <th>Vektör Boyutu</th>
+                <th>Vektör Önizleme (İlk 5 Eleman)</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 6: HOCAYA SUNUM REHBERİ ================= -->
+    <section id="tab-lecture" class="tab-content">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="fa-solid fa-graduation-cap"></i> Akademik Sunum & Model Mantığı Rehberi</h2>
+          <span class="status-badge">Ödev & Sunum Şablonu</span>
+        </div>
+
+        <div style="margin-bottom: 2rem; color: var(--text-muted);">
+          Hocanıza ve sınıf arkadaşlarınızla sunum yaparken kullanabileceğiniz 5 temel teknik aşama aşağıda açıklanmıştır:
+        </div>
+
+        <!-- Step 1 -->
+        <div class="lecture-card">
+          <div class="lecture-title">
+            <span class="lecture-step">1</span> Yüz Tespiti (Face Detection & Bounding Box)
+          </div>
+          <div class="lecture-desc">
+            Görüntü yüklendiğinde SSD MobileNet veya Haar Cascade mimarisi kullanılarak fotoğraftaki insan yüzlerinin koordinatları (X, Y, Genişlik, Yükseklik) tespit edilir ve çerçeve içine alınır.
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="lecture-card">
+          <div class="lecture-title">
+            <span class="lecture-step">2</span> Yüz Hizalama (Landmark Alignment)
+          </div>
+          <div class="lecture-desc">
+            Gözler, burun ucu, çene çizgisi ve ağız kenarları gibi 68 ana nirengi noktası (Landmark) tespit edilir. Yüz eğik dursa bile affin dönüşümü ile dik açıya getirilir.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="lecture-card">
+          <div class="lecture-title">
+            <span class="lecture-step">3</span> Derin Vektör Gömme (128-Dimensional Face Embeddings)
+          </div>
+          <div class="lecture-desc">
+            Hizalanmış yüz derin evrişimli sinir ağından (CNN) geçirilir. Çıktı olarak 128 sayıdan oluşan benzersiz bir öznitelik vektörü üretilir.
+          </div>
+          <div class="math-formula">
+            V = [v_1, v_2, v_3, ..., v_{128}] \quad \text{burada } \|V\| = 1
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="lecture-card">
+          <div class="lecture-title">
+            <span class="lecture-step">4</span> Kosinüs Benzerliği ile Tanıma (Cosine Similarity)
+          </div>
+          <div class="lecture-desc">
+            Bilinmeyen bir yüzün vektörü (\(A\)) ile veritabanında eğitilmiş kişinin vektörü (\(B\)) arasındaki açı hesaplanır. Açı küçüldükçe benzerlik %100'e yaklaşır.
+          </div>
+          <div class="math-formula">
+            \text{Similarity}(A, B) = \frac{A \cdot B}{\|A\| \|B\|} = \frac{\sum_{i=1}^{128} A_i B_i}{\sqrt{\sum_{i=1}^{128} A_i^2} \sqrt{\sum_{i=1}^{128} B_i^2}}
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="lecture-card">
+          <div class="lecture-title">
+            <span class="lecture-step">5</span> Veri Artırımı (Data Augmentation) Neden Şarttır?
+          </div>
+          <div class="lecture-desc">
+            Gerçek hayatta fotoğraflar döndürülmüş (rotate), yakınlaştırılmış (scale), karanlık veya parlak olabilir. Vektör tabanlı yaklaşım sayesinde görüntünün piksel pikselleri değil, biyometrik geometrisi karşılaştırıldığı için model tüm bu varyasyonlarda yüksek hassasiyetle tanıma gerçekleştirir.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
